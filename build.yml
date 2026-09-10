@@ -1,0 +1,43 @@
+name: Build APK
+
+# Builds the Flood Alert BLE app entirely on GitHub's servers.
+# Your laptop needs nothing but git + a text editor (VS Code) — no Android
+# SDK, no Gradle, no storage or bandwidth-heavy downloads on your side.
+#
+# Trigger: runs automatically on every push to main, or manually from the
+# "Actions" tab on GitHub ("Run workflow" button).
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK (on GitHub's machine, not yours)
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 8.4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK so you can download it
+        uses: actions/upload-artifact@v4
+        with:
+          name: flood-alert-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
